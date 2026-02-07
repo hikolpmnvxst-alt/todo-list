@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شڤان ئەپ</title>
+    
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22ShvanApp%22,%22short_name%22:%22Shvan%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#121212%22,%22theme_color%22:%22#ff8c00%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/4345/4345573.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+
+    <style>
+        :root { --p: #ff8c00; --bg: #121212; }
+        body { font-family: sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 400px; background: #1e1e1e; padding: 20px; border-radius: 20px; }
+        #install-row { display: none; background: #333; width: 100%; padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; border: 1px solid var(--p); }
+        button { cursor: pointer; border: none; font-weight: bold; border-radius: 10px; }
+        #btn-install { background: var(--p); color: white; padding: 10px 20px; }
+        .input-box { display: flex; gap: 10px; margin-top: 20px; }
+        input { flex: 1; padding: 12px; border-radius: 10px; border: none; background: #2a2a2a; color: white; }
+        #add-btn { background: var(--p); color: white; padding: 0 15px; }
+        ul { list-style: none; padding: 0; margin-top: 20px; }
+        li { background: #252525; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; border-right: 4px solid var(--p); }
+    </style>
+</head>
+<body>
+
+    <div id="install-row">
+        <p style="margin: 0 0 10px 0;">ئەپەکە دابەزێنە سەر شاشەکەت</p>
+        <button id="btn-install">یەکسەر دابەزاندن (Install)</button>
+    </div>
+
+    <div class="container">
+        <h2 style="color: var(--p); margin: 0;">پلانەکانی شڤان 🚀</h2>
+        <div class="input-box">
+            <input type="text" id="task-in" placeholder="ئیشێکی نوێ...">
+            <button id="add-btn">زیادکردن</button>
+        </div>
+        <ul id="list"></ul>
+    </div>
+
+<script>
+    // کۆدی پێویست بۆ دەرکەوتنی دوگمەی دابەزاندن
+    let deferredPrompt;
+    const installRow = document.getElementById('install-row');
+    const btnInstall = document.getElementById('btn-install');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installRow.style.display = 'block'; // دوگمەکە نیشان دەدات ئەگەر مۆبایلەکە ئامادە بوو
+    });
+
+    btnInstall.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') installRow.style.display = 'none';
+            deferredPrompt = null;
+        }
+    });
+
+    // سێرڤس وۆرکەر (پێویستە بۆ ئەوەی ببێتە ئەپ)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ZW50ID0+IHsgfSk7');
+    }
+
+    // لۆجیکی لیستەکە
+    const taskIn = document.getElementById('task-in');
+    const list = document.getElementById('list');
+
+    function render() {
+        let tasks = JSON.parse(localStorage.getItem('shvan_final') || '[]');
+        list.innerHTML = tasks.map((t, i) => `<li>${t} <span onclick="del(${i})" style="color:red; cursor:pointer;">🗑️</span></li>`).join('');
+    }
+
+    document.getElementById('add-btn').onclick = () => {
+        if (!taskIn.value) return;
+        let tasks = JSON.parse(localStorage.getItem('shvan_final') || '[]');
+        tasks.push(taskIn.value);
+        localStorage.setItem('shvan_final', JSON.stringify(tasks));
+        taskIn.value = '';
+        render();
+    };
+
+    window.del = (i) => {
+        let tasks = JSON.parse(localStorage.getItem('shvan_final'));
+        tasks.splice(i, 1);
+        localStorage.setItem('shvan_final', JSON.stringify(tasks));
+        render();
+    };
+
+    render();
+</script>
+</body>
+</html>
